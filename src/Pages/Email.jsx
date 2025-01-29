@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { gapi } from "gapi-script";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Navbar from "../Components/Navbar";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Table from "react-bootstrap/Table";
-
+import { Editor } from "@tinymce/tinymce-react";
+import Swal from "sweetalert2";
 const CLIENT_ID =
   "848428458188-ccqkntdb39k5gnjq6ftb9rftbrb1ssb1.apps.googleusercontent.com";
 const API_KEY = "AIzaSyACbfsltD_C7ymw2aYHFZKHrDQUbjcZ8lc";
@@ -13,6 +14,7 @@ const SCOPES =
   "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
 
 const Email = () => {
+  const editorRef = useRef(null);
   const [emails, setEmails] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -21,38 +23,54 @@ const Email = () => {
     cc: "",
     bcc: "",
     subject: "",
-    body: "",
+    body: {
+      html: "",
+      text: "",
+    },
   });
   const [nextPageToken, setNextPageToken] = useState(null);
   const [prevPageToken, setPrevPageToken] = useState(null);
+  const [pageTokens, setPageTokens] = useState([]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const getEmailBody = (email) => {
     if (!email?.payload) return "No message content.";
 
-    // Check if the body exists directly (may contain plain or HTML content)
-    if (email.payload.body?.data) {
-      // Attempt to decode Base64 if there is any data
+    // Function to find HTML or plain text content in message parts
+    const findContentInParts = (parts) => {
+      let htmlContent = null;
+      let plainContent = null;
+
+      const searchParts = (parts) => {
+        for (const part of parts) {
+          if (part.mimeType === "text/html" && part.body?.data) {
+            htmlContent = decodeBase64(part.body.data);
+          } else if (part.mimeType === "text/plain" && part.body?.data) {
+            plainContent = decodeBase64(part.body.data);
+          }
+          if (part.parts) {
+            searchParts(part.parts);
+          }
+        }
+      };
+
+      searchParts(parts);
+      return htmlContent || plainContent;
+    };
+
+    // Check for content in the main body
+    if (email.payload.mimeType === "text/html" && email.payload.body?.data) {
+      return decodeBase64(email.payload.body.data);
+    } else if (
+      email.payload.mimeType === "text/plain" &&
+      email.payload.body?.data
+    ) {
       return decodeBase64(email.payload.body.data);
     }
 
-    // Handle multipart messages and prefer HTML content
+    // Check for content in message parts
     if (email.payload.parts) {
-      let htmlContent = ""; // Store HTML content
-
-      for (const part of email.payload.parts) {
-        // Look for 'text/html' type first
-        if (part.mimeType === "text/html" && part.body?.data) {
-          htmlContent = decodeBase64(part.body.data); // Get HTML content
-          break;
-        }
-        // Fallback to plain text if no HTML
-        else if (part.mimeType === "text/plain" && part.body?.data) {
-          htmlContent = decodeBase64(part.body.data); // Get plain text content
-        }
-      }
-
-      if (htmlContent) {
-        return htmlContent; // Return HTML or text content
-      }
+      const content = findContentInParts(email.payload.parts);
+      if (content) return content;
     }
 
     return "No readable message content.";
@@ -149,69 +167,85 @@ const Email = () => {
     }
   };
 
-// First, add a state to track the current page history
-const [pageHistory, setPageHistory] = useState([]);
+  // First, add a state to track the current page history
+  const [pageHistory, setPageHistory] = useState([]);
 
-// Update the fetchEmails function
-const fetchEmails = async (pageToken = "", isNextPage = true) => {
-  try {
-    const response = await gapi.client.gmail.users.messages.list({
-      userId: "me",
-      labelIds: ["INBOX"],
-      maxResults: 10,
-      pageToken: pageToken || undefined,
-    });
+  // Update the fetchEmails function
+  const fetchEmails = async (pageToken = "", isNextPage = true) => {
+    try {
+      // Query for messages in the primary inbox using only the inbox label and search query
+      const response = await gapi.client.gmail.users.messages.list({
+        userId: "me",
+        labelIds: ["INBOX"],
+        maxResults: 10,
+        pageToken: pageToken || undefined,
+        q: "category:primary", // Using search query to filter primary emails
+      });
 
-    if (response.result.messages) {
-      const emailData = await Promise.all(
-        response.result.messages.map(async (msg) => {
-          const email = await gapi.client.gmail.users.messages.get({
-            userId: "me",
-            id: msg.id,
-          });
-          return email.result;
-        })
-      );
+      if (response.result.messages) {
+        const emailData = await Promise.all(
+          response.result.messages.map(async (msg) => {
+            const email = await gapi.client.gmail.users.messages.get({
+              userId: "me",
+              id: msg.id,
+              format: "full", // Get full message details
+            });
+            return email.result;
+          })
+        );
 
-      setEmails(emailData);
-      
-      // Update page history and tokens
-      if (isNextPage && pageToken) {
-        setPageHistory(prev => [...prev, pageToken]);
-      } else if (!isNextPage) {
-        setPageHistory(prev => prev.slice(0, -1));
+        // Filter out any emails that might not belong in primary
+        const primaryEmails = emailData.filter((email) => {
+          const labels = email.labelIds || [];
+          return (
+            labels.includes("INBOX") &&
+            !labels.includes("TRASH") &&
+            !labels.includes("SPAM")
+          );
+        });
+
+        setEmails(primaryEmails);
+
+        // Update page history and tokens
+        if (isNextPage && pageToken) {
+          setPageHistory((prev) => [...prev, pageToken]);
+        } else if (!isNextPage) {
+          setPageHistory((prev) => prev.slice(0, -1));
+        }
+
+        setNextPageToken(response.result.nextPageToken || null);
+        setPrevPageToken(
+          pageHistory.length > 0 ? pageHistory[pageHistory.length - 1] : null
+        );
+      } else {
+        setEmails([]);
+        setNextPageToken(null);
+        setPrevPageToken(null);
       }
-
-      setNextPageToken(response.result.nextPageToken || null);
-      // Set prevPageToken based on page history
-      setPrevPageToken(pageHistory.length > 0 ? pageHistory[pageHistory.length - 1] : null);
-    } else {
-      setEmails([]);
-      setNextPageToken(null);
-      setPrevPageToken(null);
+    } catch (error) {
+      console.error("Error fetching emails:", error);
+      // More descriptive error message
+      const errorMessage = error.result?.error?.message || error.message;
+      alert("Failed to fetch emails: " + errorMessage);
     }
-  } catch (error) {
-    console.error("Error fetching emails:", error);
-    alert("Failed to fetch emails: " + error.message);
-  }
-};
+  };
 
-// Update the handleNextPage function
-const handleNextPage = () => {
-  if (nextPageToken) {
-    fetchEmails(nextPageToken, true);
-  }
-};
+  // Update the handleNextPage function
+  const handleNextPage = () => {
+    if (nextPageToken) {
+      fetchEmails(nextPageToken, true);
+    }
+  };
 
-// Update the handlePrevPage function
-const handlePrevPage = () => {
-  const previousToken = pageHistory[pageHistory.length - 1];
-  if (previousToken) {
-    fetchEmails(previousToken, false);
-  }
-};
+  // Update the handlePrevPage function
+  const handlePrevPage = () => {
+    const previousToken = pageHistory[pageHistory.length - 1];
+    if (previousToken) {
+      fetchEmails(previousToken, false);
+    }
+  };
 
-
+  // Update the sendEmail function to handle HTML content
   const sendEmail = async () => {
     const authInstance = gapi.auth2.getAuthInstance();
     if (!authInstance.isSignedIn.get()) {
@@ -228,7 +262,7 @@ const handlePrevPage = () => {
     const boundary = `----=_Part_${Date.now().toString(16)}`;
     let emailParts = [];
 
-    // Email headers
+    // Email headers with multipart/alternative for HTML and plain text
     emailParts.push(
       `From: me`,
       `To: ${to}`,
@@ -239,14 +273,24 @@ const handlePrevPage = () => {
       `Content-Type: multipart/mixed; boundary="${boundary}"`,
       ``,
       `--${boundary}`,
+      `Content-Type: multipart/alternative; boundary="alt-${boundary}"`,
+      ``,
+      `--alt-${boundary}`,
       `Content-Type: text/plain; charset="UTF-8"`,
       `Content-Transfer-Encoding: 7bit`,
       ``,
-      `${body || ""}`,
-      ``
+      `${body.text || ""}`,
+      ``,
+      `--alt-${boundary}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      `${body.html || ""}`,
+      ``,
+      `--alt-${boundary}--`
     );
 
-    // Filter out null values
+    // Filter out null values and handle attachments
     emailParts = emailParts.filter((part) => part !== null);
 
     try {
@@ -296,9 +340,14 @@ const handlePrevPage = () => {
         userId: "me",
         resource: { raw: base64EncodedEmail },
       });
-
-      alert("Email sent successfully!");
-      setCompose({ to: "", cc: "", bcc: "", subject: "", body: "" });
+      Swal.fire("Success", "Email sent successfully!", "success");
+      setCompose({
+        to: "",
+        cc: "",
+        bcc: "",
+        subject: "",
+        body: { html: "", text: "" },
+      });
       setAttachment(null);
       setShowModal(false);
     } catch (error) {
@@ -306,7 +355,6 @@ const handlePrevPage = () => {
       alert("Failed to send email: " + error.message);
     }
   };
-
   // Add this function to handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -452,7 +500,7 @@ const handlePrevPage = () => {
       </div>
 
       {/* Compose Email Modal using React-Bootstrap */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>New Email</Modal.Title>
         </Modal.Header>
@@ -487,16 +535,54 @@ const handlePrevPage = () => {
               setCompose({ ...compose, subject: e.target.value })
             }
           />
-          <textarea
-            className="form-control mb-2"
-            rows="5"
-            placeholder="Message"
-            value={compose.body}
-            onChange={(e) => setCompose({ ...compose, body: e.target.value })}
-          ></textarea>
+          <Editor
+            apiKey="ukh7c4uikjqrutla9tzbs81bv5q9oe0f0wzj3efdreok3iyf"
+            onInit={(evt, editor) => (editorRef.current = editor)}
+            init={{
+              height: 300,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "autolink",
+                "lists",
+                "link",
+                "image",
+                "charmap",
+                "preview",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+                "code",
+                "fullscreen",
+                "insertdatetime",
+                "media",
+                "table",
+                "code",
+                "help",
+                "wordcount",
+              ],
+              toolbar:
+                "undo redo | blocks | " +
+                "bold italic forecolor | alignleft aligncenter " +
+                "alignright alignjustify | bullist numlist outdent indent | " +
+                "removeformat | help",
+              content_style:
+                "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+            }}
+            value={compose.body.html}
+            onEditorChange={(content, editor) => {
+              setCompose({
+                ...compose,
+                body: {
+                  html: content,
+                  text: editor.getContent({ format: "text" }),
+                },
+              });
+            }}
+          />
           <input
             type="file"
-            className="form-control mb-2"
+            className="form-control mt-2"
             onChange={handleFileSelect}
           />
         </Modal.Body>
