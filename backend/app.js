@@ -7,9 +7,11 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const Pusher = require("pusher");
+let dotenv = require('dotenv').config()
 
 const app = express();
 const secretKey = "omni-channel-comms"; // Secret key for JWT
+const twilioRoutes = require('./twilioRoutes');
 
 const pusher = new Pusher({
   appId: "1932984",
@@ -28,7 +30,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-
+app.use(twilioRoutes);
 
 // Ensure 'public/uploads' directory exists
 const uploadDir = path.join(__dirname, "public/uploads");

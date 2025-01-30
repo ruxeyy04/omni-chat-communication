@@ -30,8 +30,7 @@ const Email = () => {
   });
   const [nextPageToken, setNextPageToken] = useState(null);
   const [prevPageToken, setPrevPageToken] = useState(null);
-  const [pageTokens, setPageTokens] = useState([]);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
   const getEmailBody = (email) => {
     if (!email?.payload) return "No message content.";
 
