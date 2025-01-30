@@ -387,280 +387,283 @@ const Email = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <>
       <Navbar />
-      <nav className="navbar navbar-light bg-light mb-3">
-        <span className="navbar-brand mx-3">Email Client</span>
-        <div>
-          {isAuthenticated ? (
-            <button className="btn btn-danger" onClick={handleLogout}>
-              Logout
-            </button>
-          ) : (
-            <button className="btn btn-primary" onClick={handleLogin}>
-              Login
-            </button>
-          )}
-        </div>
-      </nav>
-
-      <div className="row">
-        {/* Inbox Section */}
-        <div className="col-md-12">
-          <h5>Inbox</h5>
-          {isAuthenticated ? (
-            <>
-              <button
-                className="btn btn-secondary mb-2"
-                onClick={() => {
-                  setNextPageToken(null);
-                  setPrevPageToken(null);
-                  fetchEmails();
-                }}
-              >
-                Refresh Inbox
+      <div className="container mt-4">
+        <nav className="navbar navbar-light bg-light mb-3">
+          <span className="navbar-brand mx-3">Email Client</span>
+          <div>
+            {isAuthenticated ? (
+              <button className="btn btn-danger" onClick={handleLogout}>
+                Logout
               </button>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>Sender</th>
-                    <th>Subject</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {emails.length > 0 ? (
-                    emails.map((email, index) => (
-                      <tr
-                        key={index}
-                        onClick={() => openEmailModal(email)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <td>
-                          {
-                            email.payload.headers.find((h) => h.name === "From")
-                              ?.value
-                          }
-                        </td>
-                        <td>
-                          {
-                            email.payload.headers.find(
-                              (h) => h.name === "Subject"
-                            )?.value
-                          }
-                        </td>
-                        <td>
-                          {new Date(
-                            email.internalDate * 1
-                          ).toLocaleDateString()}
+            ) : (
+              <button className="btn btn-primary" onClick={handleLogin}>
+                Login
+              </button>
+            )}
+          </div>
+        </nav>
+
+        <div className="row">
+          {/* Inbox Section */}
+          <div className="col-md-12">
+            <h5>Inbox</h5>
+            {isAuthenticated ? (
+              <>
+                <button
+                  className="btn btn-secondary mb-2"
+                  onClick={() => {
+                    setNextPageToken(null);
+                    setPrevPageToken(null);
+                    fetchEmails();
+                  }}
+                >
+                  Refresh Inbox
+                </button>
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <th>Sender</th>
+                      <th>Subject</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emails.length > 0 ? (
+                      emails.map((email, index) => (
+                        <tr
+                          key={index}
+                          onClick={() => openEmailModal(email)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <td>
+                            {
+                              email.payload.headers.find(
+                                (h) => h.name === "From"
+                              )?.value
+                            }
+                          </td>
+                          <td>
+                            {
+                              email.payload.headers.find(
+                                (h) => h.name === "Subject"
+                              )?.value
+                            }
+                          </td>
+                          <td>
+                            {new Date(
+                              email.internalDate * 1
+                            ).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="text-center">
+                          No emails found
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3" className="text-center">
-                        No emails found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-              <div className="d-flex justify-content-center gap-2 mt-3">
-                <button
-                  className="btn btn-primary"
-                  onClick={handlePrevPage}
-                  disabled={pageHistory.length === 0}
-                >
-                  ← Previous
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleNextPage}
-                  disabled={!nextPageToken}
-                >
-                  Next →
-                </button>
-              </div>
-            </>
-          ) : (
-            <p>Please log in to view your inbox.</p>
-          )}
+                    )}
+                  </tbody>
+                </Table>
+                <div className="d-flex justify-content-center gap-2 mt-3">
+                  <button
+                    className="btn btn-primary"
+                    onClick={handlePrevPage}
+                    disabled={pageHistory.length === 0}
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleNextPage}
+                    disabled={!nextPageToken}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p>Please log in to view your inbox.</p>
+            )}
+          </div>
+
+          {/* Compose Section */}
+          <div className="col-md-6">
+            <h5>Compose Email</h5>
+            {isAuthenticated && (
+              <Button variant="success" onClick={() => setShowModal(true)}>
+                New Email
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Compose Section */}
-        <div className="col-md-6">
-          <h5>Compose Email</h5>
-          {isAuthenticated && (
-            <Button variant="success" onClick={() => setShowModal(true)}>
-              New Email
+        {/* Compose Email Modal using React-Bootstrap */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>New Email</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <input
+              type="email"
+              className="form-control mb-2"
+              placeholder="To"
+              value={compose.to}
+              onChange={(e) => setCompose({ ...compose, to: e.target.value })}
+            />
+            <input
+              type="email"
+              className="form-control mb-2"
+              placeholder="CC"
+              value={compose.cc}
+              onChange={(e) => setCompose({ ...compose, cc: e.target.value })}
+            />
+            <input
+              type="email"
+              className="form-control mb-2"
+              placeholder="BCC"
+              value={compose.bcc}
+              onChange={(e) => setCompose({ ...compose, bcc: e.target.value })}
+            />
+            <input
+              type="text"
+              className="form-control mb-2"
+              placeholder="Subject"
+              value={compose.subject}
+              onChange={(e) =>
+                setCompose({ ...compose, subject: e.target.value })
+              }
+            />
+            <Editor
+              apiKey="ukh7c4uikjqrutla9tzbs81bv5q9oe0f0wzj3efdreok3iyf"
+              onInit={(evt, editor) => (editorRef.current = editor)}
+              init={{
+                height: 300,
+                menubar: false,
+                plugins: [
+                  "advlist",
+                  "autolink",
+                  "lists",
+                  "link",
+                  "image",
+                  "charmap",
+                  "preview",
+                  "anchor",
+                  "searchreplace",
+                  "visualblocks",
+                  "code",
+                  "fullscreen",
+                  "insertdatetime",
+                  "media",
+                  "table",
+                  "code",
+                  "help",
+                  "wordcount",
+                ],
+                toolbar:
+                  "undo redo | blocks | " +
+                  "bold italic forecolor | alignleft aligncenter " +
+                  "alignright alignjustify | bullist numlist outdent indent | " +
+                  "removeformat | help",
+                content_style:
+                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+              }}
+              value={compose.body.html}
+              onEditorChange={(content, editor) => {
+                setCompose({
+                  ...compose,
+                  body: {
+                    html: content,
+                    text: editor.getContent({ format: "text" }),
+                  },
+                });
+              }}
+            />
+            <input
+              type="file"
+              className="form-control mt-2"
+              onChange={handleFileSelect}
+            />
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Close
             </Button>
-          )}
-        </div>
+            <Button variant="primary" onClick={sendEmail}>
+              Send
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        {/* Inbox Email */}
+        <Modal
+          size="lg"
+          show={showEmailModal}
+          onHide={() => setShowEmailModal(false)}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Email Details</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {selectedEmail && (
+              <>
+                <p>
+                  <strong>From: </strong>
+                  {
+                    selectedEmail.payload.headers.find((h) => h.name === "From")
+                      ?.value
+                  }
+                </p>
+                <p>
+                  <strong>Subject: </strong>
+                  {
+                    selectedEmail.payload.headers.find(
+                      (h) => h.name === "Subject"
+                    )?.value
+                  }
+                </p>
+                <p>
+                  <strong>Date: </strong>
+                  {new Date(selectedEmail.internalDate * 1).toLocaleString()}
+                </p>
+                <hr />
+                {/* Render the HTML email content */}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: getEmailBody(selectedEmail),
+                  }}
+                />
+
+                {/* Attachments */}
+                {selectedEmail.payload.parts?.map((part, index) => {
+                  if (part.filename && part.body.attachmentId) {
+                    return (
+                      <div key={index} className="mt-2">
+                        <Button
+                          variant="link"
+                          onClick={() =>
+                            downloadAttachment(
+                              selectedEmail.id,
+                              part.body.attachmentId,
+                              part.filename,
+                              part.mimeType
+                            )
+                          }
+                        >
+                          📎 {part.filename}
+                        </Button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </>
+            )}
+          </Modal.Body>
+        </Modal>
       </div>
-
-      {/* Compose Email Modal using React-Bootstrap */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>New Email</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <input
-            type="email"
-            className="form-control mb-2"
-            placeholder="To"
-            value={compose.to}
-            onChange={(e) => setCompose({ ...compose, to: e.target.value })}
-          />
-          <input
-            type="email"
-            className="form-control mb-2"
-            placeholder="CC"
-            value={compose.cc}
-            onChange={(e) => setCompose({ ...compose, cc: e.target.value })}
-          />
-          <input
-            type="email"
-            className="form-control mb-2"
-            placeholder="BCC"
-            value={compose.bcc}
-            onChange={(e) => setCompose({ ...compose, bcc: e.target.value })}
-          />
-          <input
-            type="text"
-            className="form-control mb-2"
-            placeholder="Subject"
-            value={compose.subject}
-            onChange={(e) =>
-              setCompose({ ...compose, subject: e.target.value })
-            }
-          />
-          <Editor
-            apiKey="ukh7c4uikjqrutla9tzbs81bv5q9oe0f0wzj3efdreok3iyf"
-            onInit={(evt, editor) => (editorRef.current = editor)}
-            init={{
-              height: 300,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "autolink",
-                "lists",
-                "link",
-                "image",
-                "charmap",
-                "preview",
-                "anchor",
-                "searchreplace",
-                "visualblocks",
-                "code",
-                "fullscreen",
-                "insertdatetime",
-                "media",
-                "table",
-                "code",
-                "help",
-                "wordcount",
-              ],
-              toolbar:
-                "undo redo | blocks | " +
-                "bold italic forecolor | alignleft aligncenter " +
-                "alignright alignjustify | bullist numlist outdent indent | " +
-                "removeformat | help",
-              content_style:
-                "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-            }}
-            value={compose.body.html}
-            onEditorChange={(content, editor) => {
-              setCompose({
-                ...compose,
-                body: {
-                  html: content,
-                  text: editor.getContent({ format: "text" }),
-                },
-              });
-            }}
-          />
-          <input
-            type="file"
-            className="form-control mt-2"
-            onChange={handleFileSelect}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={sendEmail}>
-            Send
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      {/* Inbox Email */}
-      <Modal
-        size="lg"
-        show={showEmailModal}
-        onHide={() => setShowEmailModal(false)}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Email Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedEmail && (
-            <>
-              <p>
-                <strong>From: </strong>
-                {
-                  selectedEmail.payload.headers.find((h) => h.name === "From")
-                    ?.value
-                }
-              </p>
-              <p>
-                <strong>Subject: </strong>
-                {
-                  selectedEmail.payload.headers.find(
-                    (h) => h.name === "Subject"
-                  )?.value
-                }
-              </p>
-              <p>
-                <strong>Date: </strong>
-                {new Date(selectedEmail.internalDate * 1).toLocaleString()}
-              </p>
-              <hr />
-              {/* Render the HTML email content */}
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: getEmailBody(selectedEmail),
-                }}
-              />
-
-              {/* Attachments */}
-              {selectedEmail.payload.parts?.map((part, index) => {
-                if (part.filename && part.body.attachmentId) {
-                  return (
-                    <div key={index} className="mt-2">
-                      <Button
-                        variant="link"
-                        onClick={() =>
-                          downloadAttachment(
-                            selectedEmail.id,
-                            part.body.attachmentId,
-                            part.filename,
-                            part.mimeType
-                          )
-                        }
-                      >
-                        📎 {part.filename}
-                      </Button>
-                    </div>
-                  );
-                }
-                return null;
-              })}
-            </>
-          )}
-        </Modal.Body>
-      </Modal>
-    </div>
+    </>
   );
 };
 

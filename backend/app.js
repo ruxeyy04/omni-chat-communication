@@ -8,16 +8,15 @@ const multer = require("multer");
 const path = require("path");
 const Pusher = require("pusher");
 let dotenv = require('dotenv').config()
-
 const app = express();
 const secretKey = "omni-channel-comms"; // Secret key for JWT
 const twilioRoutes = require('./twilioRoutes');
 
 const pusher = new Pusher({
-  appId: "1932984",
-  key: "33e2f92a4833d2732d79",
-  secret: "5584badad393333c9218",
-  cluster: "ap1",
+  appId: process.env.PUSHER_APPID,
+  key: process.env.PUSHER_KEY,
+  secret: process.env.PUSHER_SECRET,
+  cluster: process.env.PUSHER_CLUSHER,
   useTLS: true
 });
 
@@ -31,7 +30,7 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use(twilioRoutes);
-
+app.use(express.urlencoded({ extended: true }));
 // Ensure 'public/uploads' directory exists
 const uploadDir = path.join(__dirname, "public/uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -194,6 +193,13 @@ app.get("/getMessages/:sender_id/:receiver_id", (req, res) => {
     res.status(200).json(results);
   });
 });
+
+
+
+
+
+
+
 
 
 // ---------------- START SERVER ----------------

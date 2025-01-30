@@ -121,6 +121,21 @@ const Chat = () => {
   const filteredUsers = users.filter((user) =>
     user.fullname.toLowerCase().includes(search.toLowerCase())
   );
+  const handleDownload = (fileUrl, fileName) => {
+    fetch(fileUrl)
+      .then((response) => response.blob()) // Convert to Blob
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName; // Set the file name
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((error) => console.error("Download failed:", error));
+  };
 
   return (
     <div>
@@ -207,13 +222,62 @@ const Chat = () => {
                               {msg.message}
                               {msg.attachment && (
                                 <div className="attachment">
-                                  <a
-                                    href={`http://localhost:3000/uploads/${msg.attachment}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {msg.attachment}
-                                  </a>
+                                  {/\.(jpg|jpeg|png|gif|webp)$/i.test(
+                                    msg.attachment
+                                  ) ? (
+                                    <div>
+                                      <img
+                                        src={`http://localhost:3000/uploads/${msg.attachment}`}
+                                        alt="attachment"
+                                        className="attachment-preview"
+                                        style={{
+                                          maxWidth: "200px",
+                                          borderRadius: "5px",
+                                          cursor: "pointer",
+                                        }}
+                                        onClick={() =>
+                                          window.open(
+                                            `http://localhost:3000/uploads/${msg.attachment}`,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                      <br />
+                                      <button
+                                        onClick={() =>
+                                          handleDownload(
+                                            `http://localhost:3000/uploads/${msg.attachment}`,
+                                            msg.attachment
+                                          )
+                                        }
+                                        className="download-button"
+                                        style={{
+                                          marginTop: "5px",
+                                          backgroundColor: "#007bff",
+                                          color: "white",
+                                          padding: "5px 10px",
+                                          border: "none",
+                                          borderRadius: "5px",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        ⬇ Download Image
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <a
+                                      href={`http://localhost:3000/uploads/${msg.attachment}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      download
+                                      style={{
+                                        color: "#007bff",
+                                        textDecoration: "none",
+                                      }}
+                                    >
+                                      {msg.attachment}
+                                    </a>
+                                  )}
                                 </div>
                               )}
                             </div>
