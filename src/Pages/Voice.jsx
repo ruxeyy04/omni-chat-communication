@@ -109,11 +109,12 @@ const PhoneDialer = () => {
 
   const handleCall = async () => {
     if (!phoneNumber || !device || isCallActive) return;
-
+  
     try {
       setShowCallingDialog(true);
       setCallStatus("Initiating call...");
-
+      setIsOutgoingCall(true); // Set this before initiating the call
+  
       const response = await fetch(
         "http://localhost:3000/api/twilio/make-call",
         {
@@ -126,14 +127,14 @@ const PhoneDialer = () => {
           }),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to initiate call");
       }
-
+  
       const data = await response.json();
       console.log("Call SID:", data.callSid);
-
+  
       // Now set up the client-side connection for audio
       const connection = await device.connect({
         params: {
@@ -141,37 +142,37 @@ const PhoneDialer = () => {
           CallSid: data.callSid,
         },
       });
-
+  
       // Handle connection events
       connection.on("accept", () => {
         setIsCallActive(true);
         setCallStatus("Connected");
       });
-
+  
       connection.on("disconnect", () => {
-        cleanup();
+        cleanup(); // cleanup will reset isOutgoingCall
       });
-
+  
       connection.on("error", (error) => {
         console.error("Connection error:", error);
-        cleanup();
+        cleanup(); // cleanup will reset isOutgoingCall
       });
-
+  
       // Monitor call quality
       connection.on("warning", (warning) => {
         console.warn("Call quality warning:", warning);
         setCallStatus("Poor connection quality");
       });
-
+  
       connection.on("warning-cleared", () => {
         setCallStatus("Connected");
       });
-
+  
       setCurrentConnection(connection);
     } catch (error) {
       console.error("Failed to make call:", error);
       alert("Failed to place call. Please try again.");
-      cleanup();
+      cleanup(); // cleanup will reset isOutgoingCall
     }
   };
 

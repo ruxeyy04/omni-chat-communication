@@ -395,11 +395,11 @@ const Email = () => {
           <div>
             {isAuthenticated ? (
               <button className="btn btn-danger" onClick={handleLogout}>
-                Logout
+                Unbind
               </button>
             ) : (
               <button className="btn btn-primary" onClick={handleLogin}>
-                Login
+                Bind Google
               </button>
             )}
           </div>
@@ -485,7 +485,7 @@ const Email = () => {
                 </div>
               </>
             ) : (
-              <p>Please log in to view your inbox.</p>
+              <p>Please bind your google account to view your email.</p>
             )}
           </div>
 

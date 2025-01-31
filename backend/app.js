@@ -10,6 +10,7 @@ const Pusher = require("pusher");
 let dotenv = require('dotenv').config()
 const app = express();
 const secretKey = "omni-channel-comms"; // Secret key for JWT
+const voiceCallRoutes = require('./voiceCall');
 const twilioRoutes = require('./twilioRoutes');
 
 const pusher = new Pusher({
@@ -29,7 +30,9 @@ app.use(
 );
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use(voiceCallRoutes);
 app.use(twilioRoutes);
+
 app.use(express.urlencoded({ extended: true }));
 // Ensure 'public/uploads' directory exists
 const uploadDir = path.join(__dirname, "public/uploads");
