@@ -17,7 +17,7 @@ const Chat = () => {
   useEffect(() => {
     // Get logged-in user info
     axios
-      .get("http://localhost:3000/getUserInfo", {
+      .get(`${import.meta.env.VITE_MAIN_URL}/getUserInfo`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -32,7 +32,7 @@ const Chat = () => {
   useEffect(() => {
     if (userId) {
       axios
-        .get(`http://localhost:3000/getUsers/${userId}`)
+        .get(`${import.meta.env.VITE_MAIN_URL}/getUsers/${userId}`)
         .then((response) => {
           setUsers(response.data);
         })
@@ -57,7 +57,7 @@ const Chat = () => {
   useEffect(() => {
     if (selectedUser && userId) {
       axios
-        .get(`http://localhost:3000/getMessages/${userId}/${selectedUser.id}`, {
+        .get(`${import.meta.env.VITE_MAIN_URL}/getMessages/${userId}/${selectedUser.id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
@@ -103,7 +103,7 @@ const Chat = () => {
     }
 
     axios
-      .post("http://localhost:3000/sendMessage", formData, {
+      .post(`${import.meta.env.VITE_MAIN_URL}/sendMessage`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           "Content-Type": "multipart/form-data",
@@ -227,7 +227,7 @@ const Chat = () => {
                                   ) ? (
                                     <div>
                                       <img
-                                        src={`http://localhost:3000/uploads/${msg.attachment}`}
+                                        src={`${import.meta.env.VITE_MAIN_URL}/uploads/${msg.attachment}`}
                                         alt="attachment"
                                         className="attachment-preview"
                                         style={{
@@ -237,7 +237,7 @@ const Chat = () => {
                                         }}
                                         onClick={() =>
                                           window.open(
-                                            `http://localhost:3000/uploads/${msg.attachment}`,
+                                            `${import.meta.env.VITE_MAIN_URL}/uploads/${msg.attachment}`,
                                             "_blank"
                                           )
                                         }
@@ -246,7 +246,7 @@ const Chat = () => {
                                       <button
                                         onClick={() =>
                                           handleDownload(
-                                            `http://localhost:3000/uploads/${msg.attachment}`,
+                                            `${import.meta.env.VITE_MAIN_URL}/uploads/${msg.attachment}`,
                                             msg.attachment
                                           )
                                         }
@@ -266,7 +266,7 @@ const Chat = () => {
                                     </div>
                                   ) : (
                                     <a
-                                      href={`http://localhost:3000/uploads/${msg.attachment}`}
+                                      href={`${import.meta.env.VITE_MAIN_URL}/uploads/${msg.attachment}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       download

@@ -29,7 +29,7 @@ const SMS = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/getuserinfo", {
+        const response = await fetch(`${import.meta.env.VITE_MAIN_URL}/getuserinfo`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -62,7 +62,7 @@ const SMS = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3000/getcontacthistory/${phonenumber}`
+        `${import.meta.env.VITE_MAIN_URL}/getcontacthistory/${phonenumber}`
       );
       setConversations(response.data);
     } catch (error) {
@@ -114,7 +114,7 @@ const SMS = () => {
     }
 
     axios
-      .post("http://localhost:3000/msgcompose", formData, {
+      .post(`${import.meta.env.VITE_MAIN_URL}/msgcompose`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           "Content-Type": "multipart/form-data",
@@ -161,7 +161,7 @@ const SMS = () => {
   // Function to fetch message history when a number is selected
   const fetchMessageHistory = (senderId, receiverId) => {
     axios
-      .get(`http://localhost:3000/getmsghistory/${senderId}/${receiverId}`)
+      .get(`${import.meta.env.VITE_MAIN_URL}/getmsghistory/${senderId}/${receiverId}`)
       .then((response) => {
         setMessages(response.data); // Set the message history
       })
@@ -189,7 +189,7 @@ const SMS = () => {
     }
 
     axios
-      .post("http://localhost:3000/msgcompose", formData, {
+      .post(`${import.meta.env.VITE_MAIN_URL}/msgcompose`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           "Content-Type": "multipart/form-data",

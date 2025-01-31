@@ -23,11 +23,12 @@ const pusher = new Pusher({
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use(voiceCallRoutes);

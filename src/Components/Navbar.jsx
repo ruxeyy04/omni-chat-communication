@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Navbar, Nav, Container, Button } from "react-bootstrap";
+import Swal from "sweetalert2";
 
-const Navbar = () => {
+const CustomNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [fullname, setFullname] = useState("");
@@ -20,7 +22,7 @@ const Navbar = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/getuserinfo", {
+        const response = await fetch(`${import.meta.env.VITE_MAIN_URL}/getuserinfo`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -51,62 +53,38 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
-      <div className="container-fluid">
-        <Link className="navbar-brand" to="/">
+    <Navbar bg="light" expand="lg" className="shadow-sm">
+      <Container>
+        <Navbar.Brand as={Link} to="/">
           Omni-Channel Communication
-        </Link>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/dashboard" ? "active" : ""}`} to="/dashboard">
-                Home
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/chat" ? "active" : ""}`} to="/chat">
-                Chat
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/voice" ? "active" : ""}`} to="/voice">
-                Voice
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/email" ? "active" : ""}`} to="/email">
-                Email
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/sms" ? "active" : ""}`} to="/sms">
-                SMS
-              </Link>
-            </li>
-            <li className="nav-item">
-              <button className="btn btn-danger" onClick={handleLogout}>
-                Logout
-              </button>
-            </li>
-            <li className="nav-item">
-              <span className="nav-link">Name: {fullname}</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="ms-auto">
+            <Nav.Link as={Link} to="/dashboard" active={location.pathname === "/dashboard"}>
+              Home
+            </Nav.Link>
+            <Nav.Link as={Link} to="/chat" active={location.pathname === "/chat"}>
+              Chat
+            </Nav.Link>
+            <Nav.Link as={Link} to="/voice" active={location.pathname === "/voice"}>
+              Voice
+            </Nav.Link>
+            <Nav.Link as={Link} to="/email" active={location.pathname === "/email"}>
+              Email
+            </Nav.Link>
+            <Nav.Link as={Link} to="/sms" active={location.pathname === "/sms"}>
+              SMS
+            </Nav.Link>
+            <Button variant="danger" className="ms-2" onClick={handleLogout}>
+              Logout
+            </Button>
+            <Navbar.Text className="ms-3">Name: {fullname}</Navbar.Text>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 };
 
-export default Navbar;
+export default CustomNavbar;

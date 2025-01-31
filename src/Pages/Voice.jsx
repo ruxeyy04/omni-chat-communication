@@ -17,7 +17,7 @@ const PhoneDialer = () => {
   useEffect(() => {
     const setupDevice = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/twilio/token");
+        const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/twilio/token`);
         const data = await response.json();
 
         const newDevice = new Device(data.token, {
@@ -116,7 +116,7 @@ const PhoneDialer = () => {
       setIsOutgoingCall(true); // Set this before initiating the call
   
       const response = await fetch(
-        "http://localhost:3000/api/twilio/make-call",
+        `${import.meta.env.VITE_MAIN_URL}/api/twilio/make-call`,
         {
           method: "POST",
           headers: {
@@ -183,7 +183,7 @@ const PhoneDialer = () => {
         currentConnection.disconnect();
 
         // If you need to explicitly end the call on the server side:
-        await fetch("http://localhost:3000/api/twilio/end-call", {
+        await fetch(`${import.meta.env.VITE_MAIN_URL}/api/twilio/end-call`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -15,7 +15,7 @@ const Dashboard = () => {
       }
   
       try {
-        const response = await fetch('http://localhost:3000/getuserinfo', {
+        const response = await fetch(`${import.meta.env.VITE_MAIN_URL}/getuserinfo`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'  }, // Include the token in the Authorization header
         });
