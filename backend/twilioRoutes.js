@@ -40,8 +40,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
-
 // SMS Feature
 
 // ---------------- GET SMS LIST HISTORY ----------------
@@ -149,10 +147,10 @@ router.post("/msgcompose", upload.single("attachment"), (req, res) => {
         const sms_msg = await client.messages.create({
           body: message,
           from: sender_id,
+          mediaUrl: [
+            `${process.env.BASE_URL}/uploads/${filename}`
+          ],
           to: receiver_id,
-          ...(messageData.attachment && {
-            mediaUrl: [`${process.env.BASE_URL}/uploads/${filename}`],
-          }),
         });
 
         // Send response to frontend with full attachment URL

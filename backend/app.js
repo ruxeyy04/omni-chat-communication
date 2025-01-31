@@ -7,7 +7,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const Pusher = require("pusher");
-let dotenv = require('dotenv').config()
+require('dotenv').config()
 const app = express();
 const secretKey = "omni-channel-comms"; // Secret key for JWT
 const voiceCallRoutes = require('./voiceCall');
